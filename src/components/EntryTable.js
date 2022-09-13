@@ -15,8 +15,34 @@ import { useState } from "react";
 // Table component that displays entries on home screen
 
 export default function EntryTable({ entries }) {
+  const EntryGrid = () => {
+    return (
+      <>
+        <h2>Check out your saved organizations</h2>
+        <div className="GridMain">
+          {entries.map((entry) => (
+            <div className="grid" key={entry.id}>
+              <div key={entry.id}>
+                <h3>{entry.name}</h3>
+                <a className="category">{getCategory(entry.category).name}</a>
+                <p>{entry.description}</p>
+                <hr></hr>
+                <div>
+                  <a href={entry.link}>
+                    <OpenInBrowserIcon />
+                  </a>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </>
+    );
+  };
   return (
     <>
+      <EntryGrid />
+      <h2>Edit your existing entries here.</h2>
       <TableContainer component={Paper}>
         <Table sx={{ minWidth: 650 }} aria-label="simple table">
           <TableHead>
