@@ -36,3 +36,71 @@
     transform: rotate(360deg);
   }
 }
+
+.GridMain {
+  height: auto;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-bottom: 2rem;
+}
+
+.grid {
+  height: 20rem;
+  width: 14rem;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2.8px 2.2px rgba(0, 0, 0, 0.034),
+    0 6.7px 5.3px rgba(0, 0, 0, 0.048), 0 12.5px 10px rgba(0, 0, 0, 0.06),
+    0 22.3px 17.9px rgba(0, 0, 0, 0.072), 0 41.8px 33.4px rgba(0, 0, 0, 0.086);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  items-align: center;
+  margin: 10px 5px 0px 0px;
+  padding: 1rem;
+}
+
+.category {
+  height: 4rem;
+  width: auto;
+  padding: 0.5rem;
+  background: #2074d4;
+  border-radius: 20px;
+  font-size: 14px;
+  color: white;
+}
+
+p {
+  font-size: 14px;
+}
+
+.gallery {
+  margin: 0px 0px 0px 30px;
+  width: 40vw;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.filterButton {
+  display: flex;
+  align-items: center;
+  border: none;
+  padding: 0.4rem;
+  border-radius: 3px;
+  box-shadow: 0 2.8px 2.2px rgba(0, 0, 0, 0.034),
+    0 6.7px 5.3px rgba(0, 0, 0, 0.048), 0 12.5px 10px rgba(0, 0, 0, 0.06),
+    0 22.3px 17.9px rgba(0, 0, 0, 0.072), 0 41.8px 33.4px rgba(0, 0, 0, 0.086);
+
+  cursor: pointer;
+}
+
+.filter {
+  height: 12rem;
+  width: 8rem;
+}
+
+hr {
+  border-top: 1px solid gray;
+}

@@ -1,96 +1,103 @@
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import MenuIcon from '@mui/icons-material/Menu';
-import MuiAppBar from '@mui/material/AppBar';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import Container from '@mui/material/Container';
-import CssBaseline from '@mui/material/CssBaseline';
-import Divider from '@mui/material/Divider';
-import MuiDrawer from '@mui/material/Drawer';
-import Grid from '@mui/material/Grid';
-import IconButton from '@mui/material/IconButton';
-import List from '@mui/material/List';
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import MenuIcon from "@mui/icons-material/Menu";
+import MuiAppBar from "@mui/material/AppBar";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Container from "@mui/material/Container";
+import CssBaseline from "@mui/material/CssBaseline";
+import Divider from "@mui/material/Divider";
+import MuiDrawer from "@mui/material/Drawer";
+import Grid from "@mui/material/Grid";
+import IconButton from "@mui/material/IconButton";
+import List from "@mui/material/List";
 import Stack from "@mui/material/Stack";
-import { createTheme, styled, ThemeProvider } from '@mui/material/styles';
-import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
-import firebase from 'firebase/compat/app';
+import { createTheme, styled, ThemeProvider } from "@mui/material/styles";
+import Toolbar from "@mui/material/Toolbar";
+import Typography from "@mui/material/Typography";
+import firebase from "firebase/compat/app";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import './App.css';
-import EntryTable from './components/EntryTable';
-import EntryModal from './components/EntryModal';
-import { mainListItems } from './components/listItems';
-import { db, SignInScreen } from './utils/firebase';
-import { emptyEntry } from './utils/mutations';
+import "./App.css";
+import EntryTable from "./components/EntryTable";
+import EntryModal from "./components/EntryModal";
+import MainListItems from "./components/listItems";
+import { db, SignInScreen } from "./utils/firebase";
+import { emptyEntry } from "./utils/mutations";
+import React from "react";
+import OpenInBrowserIcon from "@mui/icons-material/OpenInBrowser";
+import API from "./utils/charityApi";
+import "./App.css";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 // MUI styling constants
 
 const drawerWidth = 240;
 
 const AppBar = styled(MuiAppBar, {
-  shouldForwardProp: (prop) => prop !== 'open',
+  shouldForwardProp: (prop) => prop !== "open",
 })(({ theme, open }) => ({
   zIndex: theme.zIndex.drawer + 1,
-  transition: theme.transitions.create(['width', 'margin'], {
+  transition: theme.transitions.create(["width", "margin"], {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
   }),
   ...(open && {
     marginLeft: drawerWidth,
     width: `calc(100% - ${drawerWidth}px)`,
-    transition: theme.transitions.create(['width', 'margin'], {
+    transition: theme.transitions.create(["width", "margin"], {
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.enteringScreen,
     }),
   }),
 }));
 
-const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' })(
-  ({ theme, open }) => ({
-    '& .MuiDrawer-paper': {
-      position: 'relative',
-      whiteSpace: 'nowrap',
-      width: drawerWidth,
-      transition: theme.transitions.create('width', {
+const Drawer = styled(MuiDrawer, {
+  shouldForwardProp: (prop) => prop !== "open",
+})(({ theme, open }) => ({
+  "& .MuiDrawer-paper": {
+    position: "relative",
+    whiteSpace: "nowrap",
+    width: drawerWidth,
+    transition: theme.transitions.create("width", {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.enteringScreen,
+    }),
+    boxSizing: "border-box",
+    ...(!open && {
+      overflowX: "hidden",
+      transition: theme.transitions.create("width", {
         easing: theme.transitions.easing.sharp,
-        duration: theme.transitions.duration.enteringScreen,
+        duration: theme.transitions.duration.leavingScreen,
       }),
-      boxSizing: 'border-box',
-      ...(!open && {
-        overflowX: 'hidden',
-        transition: theme.transitions.create('width', {
-          easing: theme.transitions.easing.sharp,
-          duration: theme.transitions.duration.leavingScreen,
-        }),
-        width: theme.spacing(7),
-        [theme.breakpoints.up('sm')]: {
-          width: theme.spacing(9),
-        },
-      }),
-    },
-  }),
-);
+      width: theme.spacing(7),
+      [theme.breakpoints.up("sm")]: {
+        width: theme.spacing(9),
+      },
+    }),
+  },
+}));
 
 const mdTheme = createTheme();
 
 // App.js is the homepage and handles top-level functions like user auth.
 
 export default function App() {
-
   // User authentication functionality. Would not recommend changing.
 
   const [isSignedIn, setIsSignedIn] = useState(false); // Local signed-in state.
   const [currentUser, setcurrentUser] = useState(null); // Local user info
+  const [opportunities, setOpportunity] = useState([]);
 
   // Listen to the Firebase Auth state and set the local state.
   useEffect(() => {
-    const unregisterAuthObserver = firebase.auth().onAuthStateChanged(user => {
-      setIsSignedIn(!!user);
-      if (!!user) {
-        setcurrentUser(user);
-      }
-    });
+    const unregisterAuthObserver = firebase
+      .auth()
+      .onAuthStateChanged((user) => {
+        setIsSignedIn(!!user);
+        if (!!user) {
+          setcurrentUser(user);
+        }
+      });
     return () => unregisterAuthObserver(); // Make sure we un-register Firebase observers when the component unmounts.
   }, []);
 
@@ -107,9 +114,10 @@ export default function App() {
   const [entries, setEntries] = useState([]);
 
   useEffect(() => {
-
     // ! Database query filters entries for current user. DO NOT CHANGE, editing this query may cause it to fail.
-    const q = currentUser?.uid ? query(collection(db, "entries"), where("userid", "==", currentUser.uid)) : collection(db, "entries");
+    const q = currentUser?.uid
+      ? query(collection(db, "entries"), where("userid", "==", currentUser.uid))
+      : collection(db, "entries");
 
     /* NOTE: onSnapshot allows the page to update automatically whenever there is 
     an update to the database. This means you do not have to manually update
@@ -118,13 +126,13 @@ export default function App() {
     onSnapshot(q, (snapshot) => {
       // Set Entries state variable to the current snapshot
       // For each entry, appends the document ID as an object property along with the existing document data
-      setEntries(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })))
-    })
+      setEntries(snapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id })));
+    });
   }, [currentUser]);
 
   // Main content of homescreen. This is displayed conditionally from user auth status
 
-  function mainContent() {
+  function MainContent() {
     if (isSignedIn) {
       return (
         <Grid container spacing={3}>
@@ -137,103 +145,148 @@ export default function App() {
             <EntryTable entries={entries} />
           </Grid>
         </Grid>
-      )
-    } else return (
-      <SignInScreen></SignInScreen>
-    )
+      );
+    } else return <SignInScreen></SignInScreen>;
+  }
+
+  function DatabaseContent() {
+    API.getAllOpportunity()
+      .then((res) => {
+        setOpportunity(res.data);
+        console.log(opportunities);
+      })
+      .catch((err) => console.log(err));
+
+    if (isSignedIn) {
+      return (
+        <>
+          <h2>
+            If you're interested in other initiatives, check out Charity
+            Navigation's list of recommended nonprofits.
+          </h2>
+          <div className="GridMain">
+            {opportunities.length ? (
+              opportunities.map((opportunity) => {
+                return (
+                  <div className="grid">
+                    {opportunity.charityName}
+                    <hr></hr>
+                    <a href={opportunity.charityNavigatorURL}>
+                      <OpenInBrowserIcon />
+                    </a>
+                  </div>
+                );
+              })
+            ) : (
+              <>Loading...</>
+            )}
+          </div>
+        </>
+      );
+    } else return <SignInScreen></SignInScreen>;
   }
 
   return (
     <ThemeProvider theme={mdTheme}>
-      <Box sx={{ display: 'flex' }}>
-        <CssBaseline />
-        <AppBar position="absolute" open={open}>
-          <Toolbar
+      <Router>
+        <Box sx={{ display: "flex" }}>
+          <CssBaseline />
+          <AppBar position="absolute" open={open}>
+            <Toolbar
+              sx={{
+                pr: "24px", // keep right padding when drawer closed
+              }}
+            >
+              <IconButton
+                edge="start"
+                color="inherit"
+                aria-label="open drawer"
+                onClick={toggleDrawer}
+                sx={{
+                  marginRight: "36px",
+                  ...(open && { display: "none" }),
+                }}
+              >
+                <MenuIcon />
+              </IconButton>
+              <Typography
+                component="h1"
+                variant="h6"
+                color="inherit"
+                noWrap
+                sx={{ flexGrow: 1 }}
+              >
+                Links for Climate Good
+              </Typography>
+              <Typography
+                component="h1"
+                variant="body1"
+                color="inherit"
+                noWrap
+                sx={{
+                  marginRight: "20px",
+                  display: isSignedIn ? "inline" : "none",
+                }}
+              >
+                Signed in as{" "}
+                {firebase.auth().currentUser?.displayName
+                  ? firebase.auth().currentUser?.displayName
+                  : "GenericUser"}
+              </Typography>
+              <Button
+                variant="contained"
+                size="small"
+                sx={{
+                  marginTop: "5px",
+                  marginBottom: "5px",
+                  display: isSignedIn ? "inline" : "none",
+                }}
+                onClick={() => firebase.auth().signOut()}
+              >
+                Log out
+              </Button>
+            </Toolbar>
+          </AppBar>
+          <Drawer variant="permanent" open={open}>
+            <Toolbar
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "flex-end",
+                px: [1],
+              }}
+            >
+              <IconButton onClick={toggleDrawer}>
+                <ChevronLeftIcon />
+              </IconButton>
+            </Toolbar>
+            <Divider />
+            <List component="nav">
+              <MainListItems />
+            </List>
+          </Drawer>
+          <Box
+            component="main"
             sx={{
-              pr: '24px', // keep right padding when drawer closed
+              backgroundColor: (theme) =>
+                theme.palette.mode === "light"
+                  ? theme.palette.grey[100]
+                  : theme.palette.grey[900],
+              flexGrow: 1,
+              height: "100vh",
+              overflow: "auto",
             }}
           >
-            <IconButton
-              edge="start"
-              color="inherit"
-              aria-label="open drawer"
-              onClick={toggleDrawer}
-              sx={{
-                marginRight: '36px',
-                ...(open && { display: 'none' }),
-              }}
-            >
-              <MenuIcon />
-            </IconButton>
-            <Typography
-              component="h1"
-              variant="h6"
-              color="inherit"
-              noWrap
-              sx={{ flexGrow: 1 }}
-            >
-              Links for Climate Good
-            </Typography>
-            <Typography
-              component="h1"
-              variant="body1"
-              color="inherit"
-              noWrap
-              sx={{
-                marginRight: '20px',
-                display: isSignedIn ? 'inline' : 'none'
-              }}
-            >
-              Signed in as {firebase.auth().currentUser?.displayName ? firebase.auth().currentUser?.displayName : "GenericUser"}
-            </Typography>
-            <Button variant="contained" size="small"
-              sx={{
-                marginTop: '5px',
-                marginBottom: '5px',
-                display: isSignedIn ? 'inline' : 'none'
-              }}
-              onClick={() => firebase.auth().signOut()}
-            >
-              Log out
-            </Button>
-          </Toolbar>
-        </AppBar>
-        <Drawer variant="permanent" open={open}>
-          <Toolbar
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'flex-end',
-              px: [1],
-            }}
-          >
-            <IconButton onClick={toggleDrawer}>
-              <ChevronLeftIcon />
-            </IconButton>
-          </Toolbar>
-          <Divider />
-          <List component="nav">
-            {mainListItems}
-          </List>
-        </Drawer>
-        <Box
-          component="main"
-          sx={{
-            backgroundColor: (theme) =>
-              theme.palette.mode === 'light'
-                ? theme.palette.grey[100]
-                : theme.palette.grey[900],
-            flexGrow: 1,
-            height: '100vh',
-            overflow: 'auto',
-          }}
-        >
-          <Toolbar />
-          <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-            {mainContent()}
-          </Container>
+            <Toolbar />
+            <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+              <Routes>
+                <Route path="/" element={<MainContent />} />
+                <Route path="/database" element={<DatabaseContent />} />
+              </Routes>
+            </Container>
+          </Box>
         </Box>
-      </Box>
+      </Router>
     </ThemeProvider>
   );
 }
